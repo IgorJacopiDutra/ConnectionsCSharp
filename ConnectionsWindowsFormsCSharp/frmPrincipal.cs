@@ -1,6 +1,7 @@
 using ConnectionsWindowsFormsCSharp.Context;
 using ConnectionsWindowsFormsCSharp.Model;
 using FirebirdSql.Data.FirebirdClient;
+using Microsoft.EntityFrameworkCore.Update;
 using System.Data;
 using System.Data.Common;
 using System.Windows.Input;
@@ -86,6 +87,37 @@ namespace ConnectionsWindowsFormsCSharp
         }
         private void btnSelect_Click(object sender, EventArgs e)
         {
+            selectEntity();
+            //selectSQL();
+        }
+        private void selectEntity()
+        {
+            using (var context = new MyDbContext())
+            {
+                // Validate search input
+                if (string.IsNullOrEmpty(tbSearch.Text))
+                {
+                    throw new Exception("Por favor, informe o código do cliente para a pesquisa.");
+                }
+
+                var cliente = context.CLIENTES.FirstOrDefault(c => c.Id.ToString() == tbSearch.Text);
+
+                if (cliente != null)
+                {
+                    tbID.Text = cliente.Id.ToString();
+                    tbNome.Text = cliente.Nome;
+                    tbTpDocto.Text = cliente.TpDocto;
+                    tbDocto.Text = cliente.Docto;
+                    tbTelefone.Text = cliente.Telefone;
+                }
+                else
+                {
+                    MessageBox.Show("Cliente não cadastrado.");
+                }
+            }
+        }
+        private void selectSQL()
+        {
             try
             {
                 // Validate search input
@@ -98,7 +130,7 @@ namespace ConnectionsWindowsFormsCSharp
                 {
                     fbCon.Open();
 
-                    strSQL = "select * from CLIENTES where COD_CLIENTE = @COD_CLIENTE";
+                    strSQL = "select * from CLIENTES where ID = @ID";
 
                     using (FbCommand fbComando = new FbCommand(strSQL, fbCon))
                     {
@@ -108,9 +140,9 @@ namespace ConnectionsWindowsFormsCSharp
                         {
                             if (dr.Read())
                             {
-                                tbSearch.Text = dr["COD_CLIENTE"].ToString();
-                                tbNome.Text = dr["NOME"].ToString();
-                                tbTpDocto.Text = dr["TP_DOCTO"].ToString();
+                                tbSearch.Text = dr["Cliente"].ToString();
+                                tbNome.Text = dr["Nome"].ToString();
+                                tbTpDocto.Text = dr["TpDocto"].ToString();
                                 tbDocto.Text = dr["DOCTO"].ToString();
                                 tbTelefone.Text = dr["TELEFONE"].ToString();
                             }
@@ -130,6 +162,55 @@ namespace ConnectionsWindowsFormsCSharp
 
         private void btnUpdate_Click(object sender, EventArgs e)
         {
+            //updateEntity();
+            updateSQL();
+        }
+
+        private void updateEntity()
+        {
+            {
+                try
+                {
+                    // Validate input
+                    if (string.IsNullOrEmpty(tbID.Text))
+                    {
+                        throw new Exception("Por favor, informe o código do cliente para a edição.");
+                    }
+
+                    if (string.IsNullOrEmpty(tbNome.Text))
+                    {
+                        throw new Exception("Por favor, informe o nome do cliente.");
+                    }
+
+                    using (var context = new MyDbContext())
+                    {
+                        var cliente = context.CLIENTES.Find(tbID.Text);  // Retrieve the entity to update
+
+                        if (cliente == null)
+                        {
+                            MessageBox.Show("Cliente não encontrado.");
+                            return;
+                        }
+
+                        // Update the entity properties
+                        cliente.Nome = tbNome.Text;
+                        cliente.TpDocto = tbTpDocto.Text;
+                        cliente.Docto = tbDocto.Text;
+                        cliente.Telefone = tbTelefone.Text;
+
+                        context.SaveChanges();  // Persist the changes to the database
+
+                        MessageBox.Show("Cliente editado com sucesso!");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Erro ao editar cliente: " + ex.Message);
+                }
+            }
+        }
+   private void updateSQL()
+        {
             try
             {
                 // Validate input
@@ -147,13 +228,13 @@ namespace ConnectionsWindowsFormsCSharp
                 {
                     fbCon.Open();
 
-                    strSQL = "update CLIENTES set NOME = @NOME, TP_DOCTO = @TP_DOCTO, DOCTO = @DOCTO, TELEFONE = @TELEFONE where COD_CLIENTE = @COD_CLIENTE";
+                    strSQL = "update CLIENTES set NOME = @NOME, TPDOCTO = @TPDOCTO, DOCTO = @DOCTO, TELEFONE = @TELEFONE where COD_CLIENTE = @COD_CLIENTE";
 
                     using (FbCommand fbComando = new FbCommand(strSQL, fbCon))
                     {
-                        fbComando.Parameters.Add("@COD_CLIENTE", FbDbType.VarChar).Value = tbID.Text;
+                        fbComando.Parameters.Add("@ID", FbDbType.VarChar).Value = tbID.Text;
                         fbComando.Parameters.Add("@NOME", FbDbType.VarChar).Value = tbNome.Text;
-                        fbComando.Parameters.Add("@TP_DOCTO", FbDbType.VarChar).Value = tbTpDocto.Text;
+                        fbComando.Parameters.Add("@TPDOCTO", FbDbType.VarChar).Value = tbTpDocto.Text;
                         fbComando.Parameters.Add("@DOCTO", FbDbType.VarChar).Value = tbDocto.Text;
                         fbComando.Parameters.Add("@TELEFONE", FbDbType.VarChar).Value = tbTelefone.Text;
 
@@ -186,11 +267,55 @@ namespace ConnectionsWindowsFormsCSharp
                     throw new Exception("Por favor, informe o código do cliente para a exclusão.");
                 }
 
+                using (var context = new MyDbContext())
+                {
+                    int id = int.Parse(tbID.Text);  // Assuming tbID.Text contains a valid integer string
+                    var cliente = context.CLIENTES.Find(id);  // Use the integer value for Find
+
+                    if (cliente == null)
+                    {
+                        MessageBox.Show("Cliente não encontrado.");
+                        return;
+                    }
+
+                    context.CLIENTES.Remove(cliente);  // Mark the entity for deletion
+                    context.SaveChanges();  // Persist the deletion to the database
+
+                    MessageBox.Show("Cliente excluído com sucesso!");
+
+                    // Clear textboxes after successful deletion
+                    tbID.Text = string.Empty;
+                    tbNome.Text = string.Empty;
+                    tbTpDocto.Text = string.Empty;
+                    tbDocto.Text = string.Empty;
+                    tbTelefone.Text = string.Empty;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Erro ao excluir cliente: " + ex.Message);
+            }
+        }
+        private void deleteEntity()
+        {
+           // deleteSQL();
+            deleteEntity();
+        }
+        private void deleteSQL()
+        {
+            try
+            {
+                // Validate input
+                if (string.IsNullOrEmpty(tbID.Text))
+                {
+                    throw new Exception("Por favor, informe o código do cliente para a exclusão.");
+                }
+
                 using (FbConnection fbCon = new FbConnection(strCon))
                 {
                     fbCon.Open();
 
-                    strSQL = "delete from CLIENTES where COD_CLIENTE = @COD_CLIENTE";
+                    strSQL = "delete from CLIENTES where ID = @ID";
 
                     using (FbCommand fbComando = new FbCommand(strSQL, fbCon))
                     {
