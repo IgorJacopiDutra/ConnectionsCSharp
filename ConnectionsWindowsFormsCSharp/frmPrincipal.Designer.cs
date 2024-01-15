@@ -44,6 +44,7 @@
             lbTelefone = new Label();
             tbSearch = new TextBox();
             lbSearch = new Label();
+            btnProcedure = new Button();
             SuspendLayout();
             // 
             // btnInsert
@@ -182,11 +183,22 @@
             lbSearch.TabIndex = 14;
             lbSearch.Text = "Pesquisar";
             // 
-            // Form1
+            // btnProcedure
+            // 
+            btnProcedure.Location = new Point(646, 102);
+            btnProcedure.Name = "btnProcedure";
+            btnProcedure.Size = new Size(94, 29);
+            btnProcedure.TabIndex = 16;
+            btnProcedure.Text = "Procedure";
+            btnProcedure.UseVisualStyleBackColor = true;
+            btnProcedure.Click += btnProcedure_Click;
+            // 
+            // frmPrincipal
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(743, 450);
+            Controls.Add(btnProcedure);
             Controls.Add(tbSearch);
             Controls.Add(lbSearch);
             Controls.Add(tbTelefone);
@@ -203,7 +215,7 @@
             Controls.Add(btnSelect);
             Controls.Add(btnUpdate);
             Controls.Add(btnInsert);
-            Name = "Form1";
+            Name = "frmPrincipal";
             Text = "Form1";
             ResumeLayout(false);
             PerformLayout();
@@ -227,5 +239,6 @@
         private Label lbTelefone;
         private TextBox tbSearch;
         private Label lbSearch;
+        private Button btnProcedure;
     }
 }

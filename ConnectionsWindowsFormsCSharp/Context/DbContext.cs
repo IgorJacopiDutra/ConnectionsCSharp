@@ -1,5 +1,6 @@
 ﻿
 using ConnectionsWindowsFormsCSharp.Model;
+using FirebirdSql.Data.FirebirdClient;
 using Microsoft.EntityFrameworkCore;
 using System.Data;
 using System.Data.Common;
@@ -9,7 +10,7 @@ namespace ConnectionsWindowsFormsCSharp.Context
     public class MyDbContext : DbContext
     {
         public DbSet<Cliente> CLIENTES { get; set; }
-
+      
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             optionsBuilder.UseFirebird("User=SYSDBA;Password=masterkey;Database=C:\\geiewin\\SubProjetos\\Curso\\Git\\ConnectionsWindowsFormsCSharp\\data\\DATA.FDB;DataSource=localhost;Port=3051");
@@ -39,7 +40,31 @@ namespace ConnectionsWindowsFormsCSharp.Context
                 throw new DataException("Failed to retrieve next client ID", ex);
             }
         }
+        public int GetNextSequence(string origem)
+        {
+            try
+            {
+                using (var context = new MyDbContext())
+                {
+                    // Open connection if not already open
+                    if (context.Database.GetDbConnection().State != ConnectionState.Open)
+                    {
+                        context.Database.OpenConnection();
+                    }
 
+                    // Using FromSqlRaw to execute stored procedure
+                    var parameters = new object[] { new FbParameter("ORIGEM", FbDbType.VarChar) { Value = origem } };
+                    var result = context.Database.ExecuteSqlRaw("EXECUTE PROCEDURE SP_BUSCASEQUENCIA @ORIGEM", parameters);
+
+                    return result;
+                }
+            }
+            catch (Exception ex)
+            {
+                // Handle exceptions appropriately
+                throw new DataException("Failed to retrieve next sequence", ex);
+            }
+        }
         protected DbCommand CreateCommand()
         {
             // Check connection state before creating command
@@ -50,5 +75,8 @@ namespace ConnectionsWindowsFormsCSharp.Context
 
             return Database.GetDbConnection().CreateCommand();
         }
+
+       
+
     }
 }

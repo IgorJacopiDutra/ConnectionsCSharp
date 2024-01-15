@@ -1,10 +1,9 @@
 using ConnectionsWindowsFormsCSharp.Context;
 using ConnectionsWindowsFormsCSharp.Model;
 using FirebirdSql.Data.FirebirdClient;
-using Microsoft.EntityFrameworkCore.Update;
+using Microsoft.EntityFrameworkCore;
 using System.Data;
-using System.Data.Common;
-using System.Windows.Input;
+using System.Data.SqlClient;
 
 namespace ConnectionsWindowsFormsCSharp
 {
@@ -22,7 +21,7 @@ namespace ConnectionsWindowsFormsCSharp
 
         private void btnInsert_Click(object sender, EventArgs e)
         {
-          //  insertSQL();
+            //  insertSQL();
             insertEntity();
         }
         private void insertSQL()
@@ -65,7 +64,7 @@ namespace ConnectionsWindowsFormsCSharp
                 var novoCliente = new Cliente
                 {
                     Id = (int?)context.GetNextClienteId(),
-                     Nome = "nome",
+                    Nome = "nome",
                     TpDocto = "1",
                     Docto = "docto",
                     Telefone = "123"
@@ -76,7 +75,7 @@ namespace ConnectionsWindowsFormsCSharp
             }
         }
 
-            private bool IsTransientException(Exception ex)
+        private bool IsTransientException(Exception ex)
         {
             // Adicione lógica para identificar exceções transitórias aqui
             // Por exemplo, você pode verificar se a exceção é do tipo de exceção específico que indica uma falha transitória.
@@ -209,7 +208,7 @@ namespace ConnectionsWindowsFormsCSharp
                 }
             }
         }
-   private void updateSQL()
+        private void updateSQL()
         {
             try
             {
@@ -298,7 +297,7 @@ namespace ConnectionsWindowsFormsCSharp
         }
         private void deleteEntity()
         {
-           // deleteSQL();
+            // deleteSQL();
             deleteEntity();
         }
         private void deleteSQL()
@@ -343,6 +342,67 @@ namespace ConnectionsWindowsFormsCSharp
             catch (Exception ex)
             {
                 MessageBox.Show("Erro ao excluir cliente: " + ex.Message);
+            }
+        }
+
+        private void btnProcedure_Click(object sender, EventArgs e)
+        {
+            //procedureSQL();
+            procedureEF();
+        }
+
+        private void procedureSQL()
+        {
+            try
+            {
+                using (FbConnection fbCon = new FbConnection(strCon))
+                {
+                    fbCon.Open();
+
+                    using (FbCommand fbComando = new FbCommand("SP_BUSCASEQUENCIA", fbCon))
+                    {
+                        fbComando.CommandType = CommandType.StoredProcedure;
+
+                        FbParameter origemParam = new FbParameter("@origem", FbDbType.VarChar);
+                        origemParam.Value = "CLIENTE";
+                        fbComando.Parameters.Add(origemParam);
+
+                        FbParameter retornoParam = new FbParameter();
+                        retornoParam.ParameterName = "@sequencia";
+                        retornoParam.Direction = ParameterDirection.Output;
+                        retornoParam.FbDbType = FbDbType.Integer;
+                        fbComando.Parameters.Add(retornoParam);
+
+                        fbComando.ExecuteNonQuery();
+
+                        int retorno = Convert.ToInt32(retornoParam.Value);
+
+                        if (retorno == -1)
+                        {
+                            MessageBox.Show("Erro na busca da sequência.");
+                        }
+                        else
+                        {
+                            MessageBox.Show("Sequência obtida com sucesso: " + retorno);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }            
+        }
+
+        private void procedureEF()
+        {
+            using (var dbContext = new MyDbContext())
+            {
+                // Chamar o método GetNextSequence
+                int nextSequence = dbContext.GetNextSequence("CLIENTE");
+
+                // Usar o valor retornado conforme necessário
+                Console.WriteLine($"Próxima sequência: {nextSequence}");
             }
         }
     }
